@@ -1,0 +1,39 @@
+<odoo>
+    <record id="view_partner_form_bsat" model="ir.ui.view">
+        <field name="name">res.partner.form.bsat</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form" />
+        <field name="arch" type="xml">
+            <xpath expr="//sheet/notebook" position="inside">
+
+                <page string="Student Info">
+                    <group>
+                        <group>
+                            <field name="fathers_name" />
+                            <field name="whatsapp_number" />
+                        </group>
+                        <group>
+                            <field name="registration_date" />
+                            <field name="contact_type" />
+                        </group>
+                    </group>
+                    <group>
+                        <group>
+                            <field name="aadhar_number" />
+                            <field name="class_10th_per" />
+                            <field name="class_10th_school" />
+                            <field name="class_12th_status" />
+                            <field name="class_12th_passing_year" />
+                        </group>
+                        <group>
+                            <field name="class_12th_per" />
+                            <field name="class_12th_roll" />
+                            <field name="class_12th_school" />
+                            <field name="class_12th_stream" />
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>
