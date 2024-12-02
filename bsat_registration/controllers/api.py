@@ -1,32 +1,39 @@
 import random
 import string
 from odoo import http, fields
-from odoo.http import request
+from odoo.http import request, Response
+import json
 
 
 class StudentRegistrationController(http.Controller):
 
-    @http.route('/submit_registration', type='json', auth="public", methods=['POST'], csrf=False)
+    @http.route('/submit_registration', type='http', auth="public", methods=['POST'], cors='*', csrf=False)
     def submit_registration(self):
-        # Use request.jsonrequest to get the posted JSON data
         post = request.httprequest.get_json()
 
-        # Check if the post data exists
         if not post:
-            return {
-                "status": "error",
-                "message": "No data received"
-            }, 400  # Bad Request
+            return Response(
+                json.dumps({
+                    "status": "error",
+                    "message": "No data received"
+                }),
+                headers=[('Content-Type', 'application/json')],
+                status=400  # Bad Request
+            )
 
         # Check for existing user by mobile or email
         existing_partner = request.env['res.partner'].sudo().search(
             ['|', ('mobile', '=', post.get('mobile')), ('email', '=', post.get('email'))], limit=1
         )
         if existing_partner:
-            return {
-                "status": "error",
-                "message": "A user with this mobile or email already exists."
-            }, 409  # Conflict
+            return Response(
+                json.dumps({
+                    "status": "error",
+                    "message": "A user with this mobile or email already exists."
+                }),
+                headers=[('Content-Type', 'application/json')],
+                status=409  # Conflict
+            )
 
         # Generate a random 10-character registration token
         registration_token = ''.join(
@@ -67,9 +74,16 @@ class StudentRegistrationController(http.Controller):
         # Create the record
         new_partner = request.env['res.partner'].sudo().create(partner_data)
 
-        return {
-            "status": "success",
-            "message": "Registration successful!",
-            # Include the registration token
-            "registration_token": new_partner.registration_token
-        }
+        # Debug: Print the result to check if the partner was created
+        print("New partner created:", new_partner)
+
+        # Return a success message with registration token
+        return Response(
+            json.dumps({
+                "status": "success",
+                "message": "Registration successful!",
+                "registration_token": new_partner.registration_token
+            }),
+            headers=[('Content-Type', 'application/json')],
+            status=200  # OK
+        )
