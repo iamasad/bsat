@@ -1,34 +1,22 @@
 from odoo import http, fields
-from odoo.http import request, Response
-import json
+from odoo.http import request
 import random
 import string
+import json
 
 
 class StudentRegistrationController(http.Controller):
 
-    @http.route('/submit_registration', type='json', auth="public", methods=['POST'], cors='*', csrf=False)
+    @http.route('/submit_registration', type='json', auth="public", methods=['POST'], csrf=False)
     def submit_registration(self):
         post = request.httprequest.get_json()
 
-        # Validate the received data
+        # Check if the post data exists
         if not post:
-            return Response(
-                json.dumps({"error": "No data received."}),
-                status=400,
-                mimetype='application/json'
-            )
-
-        # Check for required fields
-        required_fields = ['name', 'email', 'mobile']
-        missing_fields = [
-            field for field in required_fields if not post.get(field)]
-        if missing_fields:
-            return Response(
-                json.dumps({"error": f"Missing required fields: {
-                           ', '.join(missing_fields)}."}),
-                status=400,
-                mimetype='application/json'
+            return request.make_response(
+                json.dumps({"message": "No data received"}),
+                headers={'Content-Type': 'application/json'},
+                status=400  # Bad Request
             )
 
         # Check for existing user by mobile or email
@@ -36,22 +24,22 @@ class StudentRegistrationController(http.Controller):
             ['|', ('mobile', '=', post.get('mobile')), ('email', '=', post.get('email'))], limit=1
         )
         if existing_partner:
-            return Response(
+            return request.make_response(
                 json.dumps(
-                    {"error": "A user with this mobile or email already exists. Please check your details."}),
-                status=400,
-                mimetype='application/json'
+                    {"message": "User with this mobile or email already exists."}),
+                headers={'Content-Type': 'application/json'},
+                status=409  # Conflict
             )
 
         # Generate a random 10-character registration token
         registration_token = ''.join(random.choices(
             string.ascii_uppercase + string.digits, k=10))
 
-        # Search for state
+        # State searching
         state = request.env['res.country.state'].sudo().search(
             [('name', '=', post.get('state_name'))], limit=1)
 
-        # Prepare partner data
+        # Create the student record
         partner_data = {
             'name': post.get('name'),
             'email': post.get('email'),
@@ -59,7 +47,6 @@ class StudentRegistrationController(http.Controller):
             'street': post.get('street'),
             'city': post.get('city'),
             'state_id': state.id if state else False,
-            # Country set to India
             'country_id': request.env.ref('base.in').id,
             'zip': post.get('zip'),
             'fathers_name': post.get('fathers_name'),
@@ -76,18 +63,16 @@ class StudentRegistrationController(http.Controller):
             'class_12th_stream': post.get('class_12th_stream'),
             'contact_type': 'student',
             'registration_token': registration_token,
-            'company_type': 'person'  # Always set to 'person'
+            'company_type': 'person'
         }
 
-        # Create the student record
         new_partner = request.env['res.partner'].sudo().create(partner_data)
 
-        return Response(
+        return request.make_response(
             json.dumps({
-                "success": True,
                 "message": "Registration successful!",
-                "registration_token": new_partner.registration_token
+                "registration_token": registration_token
             }),
-            status=200,
-            mimetype='application/json'
+            headers={'Content-Type': 'application/json'},
+            status=201  # Created
         )
