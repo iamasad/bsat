@@ -16,6 +16,7 @@ class ResPartner(models.Model):
         ("passed", "Passed")
     ], string="Class 12th Status", default="appearing")
     class_12th_passing_year = fields.Selection([
+        ("2023", "2023"),
         ("2024", "2024"),
         ("2025", "2025")
     ], string="12th Passing Year", default="2024")
