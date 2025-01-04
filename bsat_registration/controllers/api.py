@@ -21,16 +21,16 @@ class StudentRegistrationController(http.Controller):
                 status=400  # Bad Request
             )
 
-        # Check for existing user by mobile or email (Optional validation)
-        if post.get('mobile') or post.get('email'):
+        # Check for existing user by mobile
+        if post.get('mobile'):
             existing_partner = request.env['res.partner'].sudo().search(
-                ['|', ('mobile', '=', post.get('mobile')), ('email', '=', post.get('email'))], limit=1
+                [('mobile', '=', post.get('mobile'))], limit=1
             )
             if existing_partner:
                 return Response(
                     json.dumps({
                         "status": "error",
-                        "message": "A user with this mobile or email already exists."
+                        "message": "A user with this mobile no. already exists."
                     }),
                     headers=[('Content-Type', 'application/json')],
                     status=409  # Conflict
